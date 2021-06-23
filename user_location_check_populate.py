@@ -39,9 +39,9 @@ def run():
     # + devfonex1
     # + stagingredteam2
     # + esb
-    # || devstratjmo365
+    # + devstratjmo365
 
-    site_name = 'esb'
+    site_name = 'devstratjmo365'
     new_index = 'user_location_check_test2'
     doc_type = 'cyglass'
     towrite_docs = []
@@ -110,8 +110,28 @@ def run():
     normal_loc_index = 'rawappidaccmgt_v1'
     normal_loc_docs = []
     for user_id in user_ids:
-        normal_loc_search_param = {
-            'query': {'match': {'user_id': user_id}}}
+        # normal_loc_search_param = {
+        #     'queries': {'match': {'user_id': user_id}},
+        #                {'match': {'operation': 'UserLoggedIn'}}}
+
+        normal_loc_search_param = search_param = {
+                "query": {
+                    "bool": {
+                    "must": [
+                        {
+                        "match": {
+                            "user_id": user_id
+                        }
+                        },
+                        {
+                        "match": {
+                            'operation': 'UserLoggedIn'
+                        }
+                        }
+                    ]
+                    }
+                }
+                }
         for doc in scan(client=escl, index=normal_loc_index, query=normal_loc_search_param):
             normal_loc_doc = {'user_id': user_id,
                                    'location_type': 'normal',
@@ -122,12 +142,15 @@ def run():
                                    'lon_diff': 0.0,
                                    'site_name': site_name}
             normal_loc_docs.append(normal_loc_doc)
+
     print('---------------------------')
     print(len(normal_loc_docs))
     print(normal_loc_docs[0])
 
-    for doc in normal_loc_docs:
+
+    for count, doc in enumerate(normal_loc_docs):
         dst_escl.index(index=new_index, doc_type=doc_type, body=doc)
+        print("Percentage completed: ", count/len(normal_loc_docs) * 100)
 
 if __name__ == "__main__":
     run()
