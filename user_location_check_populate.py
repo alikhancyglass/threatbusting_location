@@ -1,6 +1,8 @@
+from __future__ import division
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan, bulk
 import json
+
 
 # 1. Ping ElasticSearch Instance
 
@@ -40,8 +42,12 @@ def run():
     # + stagingredteam2
     # + esb
     # + devstratjmo365
+    # + hydro3
+    # + schemmer  # empty set
+    # + stratejm
+    # + superior
 
-    site_name = 'devstratjmo365'
+    site_name = 'superior'
     new_index = 'user_location_check_test2'
     doc_type = 'cyglass'
     towrite_docs = []
@@ -150,7 +156,8 @@ def run():
 
     for count, doc in enumerate(normal_loc_docs):
         dst_escl.index(index=new_index, doc_type=doc_type, body=doc)
-        print("Percentage completed: ", count/len(normal_loc_docs) * 100)
+        if count % 1000 == 0:
+            print("Percentage completed: ", count/len(normal_loc_docs) * 100)
 
 if __name__ == "__main__":
     run()
