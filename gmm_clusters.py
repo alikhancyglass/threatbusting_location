@@ -1,7 +1,7 @@
 from __future__ import division
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan, bulk, parallel_bulk
-from user_location_event import get_escl, get_user_location_schema, create_index
+from user_location_event import get_escl, get_user_location_schema, create_index, generator_docs
 import json
 import numpy as np
 from collections import deque
@@ -58,12 +58,6 @@ def format_gmm(unscaled_gmm_docs):
     print('Total formatted unscaled gmm docs: ', len(formatted_unscaled_gmm_docs))
     return formatted_unscaled_gmm_docs
 
-def generator_docs(docs):
-    for doc in docs:
-        doc['_index'] = TARGET_INDEX
-        doc['_type'] = DOC_TYPE
-        yield doc
-
 def main():
     # SRC Data Retrieval
     src_url = "https://cyglass:cyglass@"+SRC_SITE+".cyglass.com:9200/"
@@ -85,10 +79,7 @@ def main():
               DST_SITE, 'no need to create index')
     
     ## parralel bulk
-    deque(parallel_bulk(dst_escl, gendata_docs(formatted_unscaled_gmm_docs)), maxlen=0)
-
-
-
+    deque(parallel_bulk(dst_escl, generator_docs(formatted_unscaled_gmm_docs)), maxlen=0)
 
 if __name__ == "__main__":
     main()

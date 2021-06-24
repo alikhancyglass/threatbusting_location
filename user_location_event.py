@@ -100,11 +100,11 @@ def scan_raw_locations(escl, raw_loc_index):
     for doc in scan(client=escl, index=raw_loc_index, query=raw_loc_search_param):
         loc_type = ''
         if doc['_source']['operation'] == 'UserLoggedIn':
-            loc_type = 'SuccessfulLoginLocation'
+            loc_type = 'successfulLoginLocation'
         elif doc['_source']['operation'] == 'UserLoginFailed':
-            loc_type = 'FailedLoginLocation'
+            loc_type = 'failedLoginLocation'
         else:
-            loc_type = doc['_source']['operation']+'Location'
+            continue
         raw_loc_doc = {'user_id': doc['_source']['user_id'],
                                 'location_type': loc_type,
                                 'location': {'lat': doc['_source']["rem_latitude"],
@@ -166,11 +166,11 @@ def main():
     # loop_index_to_escl(dst_escl, index=TARGET_INDEX, docs=anomaly_docs)
     
     ### DST Site Data Upload (parallel_bulk) Anomaly locations
-    deque(parallel_bulk(dst_escl, generator_docs(anomaly_docs)), maxlen=0)
+    # deque(parallel_bulk(dst_escl, generator_docs(anomaly_docs)), maxlen=0)
 
     ### DST Site Data Upload (parallel_bulk) Raw locations
     raw_docs = scan_raw_locations(src_escl, MAP_RAW_LOACATION_INDEX) 
-    # loop_index_to_escl(dst_escl, index=TARGET_INDEX, docs=raw_docs)
+    # # loop_index_to_escl(dst_escl, index=TARGET_INDEX, docs=raw_docs)
     deque(parallel_bulk(dst_escl, generator_docs(raw_docs), 10), maxlen=0)
 
 if __name__ == "__main__":
