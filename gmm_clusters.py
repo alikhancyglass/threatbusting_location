@@ -6,7 +6,7 @@ import json
 import numpy as np
 from collections import deque
 
-SRC_SITE = "devstratjmo365"
+SRC_SITE = "esb"
 DST_SITE = "devfonex1"
 DOC_TYPE = "cyglass"
 GMM_INDEX = "saas_gmm_table_v1"

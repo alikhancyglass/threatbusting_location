@@ -4,7 +4,7 @@ from elasticsearch.helpers import scan, bulk, parallel_bulk
 import json
 from collections import deque
 
-SRC_SITE = "devstratjmo365"
+SRC_SITE = "esb"
 DST_SITE = "devfonex1"
 DOC_TYPE = "cyglass"
 MAP_ML_EVENT_INDEX_ = "ml_event_v1"
@@ -166,7 +166,7 @@ def main():
     # loop_index_to_escl(dst_escl, index=TARGET_INDEX, docs=anomaly_docs)
     
     ### DST Site Data Upload (parallel_bulk) Anomaly locations
-    # deque(parallel_bulk(dst_escl, generator_docs(anomaly_docs)), maxlen=0)
+    deque(parallel_bulk(dst_escl, generator_docs(anomaly_docs)), maxlen=0)
 
     ### DST Site Data Upload (parallel_bulk) Raw locations
     raw_docs = scan_raw_locations(src_escl, MAP_RAW_LOACATION_INDEX) 
