@@ -6,10 +6,10 @@ import json
 import numpy as np
 from collections import deque
 
-SRC_SITE = "esb"
+SRC_SITE = "devfonex1"
 DST_SITE = "devfonex1"
 DOC_TYPE = "cyglass"
-GMM_INDEX = "saas_gmm_table_v1"
+GMM_INDEX = "saas_gmm_table"
 TARGET_INDEX = "user_location_test2"
 
 def scan_gmm_models(escl, index):
@@ -30,7 +30,7 @@ def scan_gmm_models(escl, index):
                         'feat_mins': doc['_source']['GMM_params']['feat_mins']
                     }
             gmm_docs.append(gmm_doc)
-    print('Detected: ', len(gmm_docs), 'gmm models')
+    print('Detected: ', len(gmm_docs), 'gmm models for ', SRC_SITE)
     return gmm_docs
 
 def unscale_mean(gmm_docs):
