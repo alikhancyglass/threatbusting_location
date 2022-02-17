@@ -1,36 +1,9 @@
-from __future__ import division
+from __future__ import division, print_function
 from elasticsearch import Elasticsearch
-from elasticsearch.helpers import scan, bulk
+from elasticsearch.helpers import scan, bulk, parallel_bulk
 import json
-
-
-# 1. Ping ElasticSearch Instance
-
-
-def get_escl(url):
-    escl = Elasticsearch(hosts=url, timeout=300)
-    if escl.ping():
-        return escl
-    return False
-
-
-def create_index(escl, set_index, set_schema):
-    """
-    Setup  Elastic Search indices for test data
-    :param set_index:
-    :param set_schema:
-    :return:
-    """
-    # create index in ES if indices do not exist
-    if not escl.indices.exists(index=set_index):
-        print "Detected no index by the name %s in Elasticsearch" % set_index
-        try:
-            escl.indices.create(index=set_index, body=set_schema, ignore=400)
-            print "Created ES index %s ... " % set_index
-        except Exception:
-            print "Failed to create ES index %s ... " % set_index
-            traceback.print_exc()
-        print "Created schema for %s in Elasticsearch" % set_index
+from user_location_event import get_escl, get_user_location_schema, create_index, generator_docs
+from collections import deque
 
 
 def run():
@@ -47,7 +20,7 @@ def run():
     # + stratejm
     # + superior
 
-    site_name = 'superior'
+    site_name = 'bcc'
     new_index = 'user_location_check_test2'
     doc_type = 'cyglass'
     towrite_docs = []
@@ -80,35 +53,34 @@ def run():
         towrite_docs.append(target_doc_baseline)
         user_ids.add(target_doc['user_id'])
 
-    # print(len(towrite_docs))
+    print(len(towrite_docs))
     # print(towrite_docs)
 
-    dst_escl = get_escl(url)
-    # schema = {"mappings": {
-    #     "cyglass": {
-    #         "properties": {
-    #             "area": {"type": "geo_shape"},
-    #             "user_id": {"type": "keyword"},
-    #             "location": {"type": "geo_point"},
-    #             "location_type": {"type": "keyword"},
-    #             "lat_z_score": {"type":"double"},
-    #             "lon_z_score": {"type":"double"},
-    #             "site_name": {"type": "keyword"}
-    #         }
-    #     }
-    # }
-    # }
-
-    # create_index(dst_escl, new_index, schema)
-
-    
-    # # dst_escl.bulk(new_index, doc_type, towrite_docs, 10000)
-    dst_site = 'devfonex1'
-    dst_url = "https://cyglass:cyglass@"+dst_site+".cyglass.com:9200/"
+    dst_site = 'devbcc6'
+    dst_url = "https://cyglass:cyglass@" + dst_site + ".cyglass.com:9200/"
     dst_escl = get_escl(dst_url)
+    schema = {"mappings": {
+        "cyglass": {
+            "properties": {
+                "area": {"type": "geo_shape"},
+                "user_id": {"type": "keyword"},
+                "location": {"type": "geo_point"},
+                "location_type": {"type": "keyword"},
+                "lat_z_score": {"type":"double"},
+                "lon_z_score": {"type":"double"},
+                "site_name": {"type": "keyword"}
+            }
+        }
+    }
+    }
 
-    for doc in towrite_docs:
-        dst_escl.index(index=new_index, doc_type=doc_type, body=doc)
+    create_index(dst_escl, new_index, schema)
+
+    # for doc in towrite_docs:
+    #     dst_escl.index(index=new_index, doc_type=doc_type, body=doc)
+
+    ## parralel bulk
+    deque(parallel_bulk(dst_escl, generator_docs(towrite_docs, new_index, doc_type)), maxlen=0)
 
     # Normal locations
     print(user_ids)
@@ -154,10 +126,12 @@ def run():
     print(normal_loc_docs[0])
 
 
-    for count, doc in enumerate(normal_loc_docs):
-        dst_escl.index(index=new_index, doc_type=doc_type, body=doc)
-        if count % 1000 == 0:
-            print("Percentage completed: ", count/len(normal_loc_docs) * 100)
+    # for count, doc in enumerate(normal_loc_docs):
+    #     dst_escl.index(index=new_index, doc_type=doc_type, body=doc)
+    #     if count % 1000 == 0:
+    #         print("Percentage completed: ", count/len(normal_loc_docs) * 100)
+
+    deque(parallel_bulk(dst_escl, generator_docs(normal_loc_docs, new_index, doc_type)), maxlen=0)
 
 if __name__ == "__main__":
     run()

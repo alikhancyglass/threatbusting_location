@@ -1,16 +1,19 @@
 from __future__ import division
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan, bulk, parallel_bulk
+from sklearn.preprocessing import MinMaxScaler
+
 from user_location_event import get_escl, get_user_location_schema, create_index, generator_docs
 import json
 import numpy as np
 from collections import deque
 
-SRC_SITE = "devfonex1"
-DST_SITE = "devfonex1"
+
+SRC_SITE = "bcc"
+DST_SITE = "devbcc6"
 DOC_TYPE = "cyglass"
 GMM_INDEX = "saas_gmm_table"
-TARGET_INDEX = "user_location_test2"
+TARGET_INDEX = "site_model_clusters"
 
 def scan_gmm_models(escl, index):
     # don;t populate from ml event, populate baselines from here. 
@@ -42,6 +45,16 @@ def unscale_mean(gmm_docs):
         gmm_docs_unscaled[count]['unscaled_lat_lon'] = unscaled_lat_lon
     return gmm_docs_unscaled
 
+# def unscale_mean_min_max(gmm_docs):
+#     # unscaled_clust_feat_means_K = (GMM_model.means_[:, f_idx] - feat_mins[f_idx]) / feat_scales[f_idx]
+#     gmm_docs_unscaled = gmm_docs[:]
+#     for count, doc in enumerate(gmm_docs):
+#         scaler = MinMaxScaler()
+#         scaler.scale_ = doc['feat_scales']
+#         scaler.min_ = doc['feat_mins']
+#         gmm_docs_unscaled[count]['unscaled_lat_lon'] = scaler.inverse_transform(np.array(doc['means']))
+#     return gmm_docs_unscaled
+
 def format_gmm(unscaled_gmm_docs):
     formatted_unscaled_gmm_docs = []
     for doc in unscaled_gmm_docs:
@@ -64,6 +77,7 @@ def main():
     src_escl = get_escl(src_url)
     gmm_docs = scan_gmm_models(src_escl, GMM_INDEX)
     unscaled_gmm_docs = unscale_mean(gmm_docs)
+    print("AFTER: ", unscaled_gmm_docs)
     formatted_unscaled_gmm_docs = format_gmm(unscaled_gmm_docs)
 
     # DST Data Upload
@@ -79,7 +93,7 @@ def main():
               DST_SITE, 'no need to create index')
     
     ## parralel bulk
-    deque(parallel_bulk(dst_escl, generator_docs(formatted_unscaled_gmm_docs)), maxlen=0)
+    # deque(parallel_bulk(dst_escl, generator_docs(formatted_unscaled_gmm_docs, TARGET_INDEX, DOC_TYPE)), maxlen=0)
 
 if __name__ == "__main__":
     main()

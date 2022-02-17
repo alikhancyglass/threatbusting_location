@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan, bulk, parallel_bulk
 import json
@@ -32,14 +32,13 @@ def create_index(escl, set_index, set_schema):
     """
     # create index in ES if indices do not exist
     if not escl.indices.exists(index=set_index):
-        print "Detected no index by the name %s in Elasticsearch" % set_index
+        print("Detected no index by the name %s in Elasticsearch" % set_index)
         try:
             escl.indices.create(index=set_index, body=set_schema, ignore=400)
-            print "Created ES index %s ... " % set_index
+            print("Created ES index %s ... " % set_index)
         except Exception:
-            print "Failed to create ES index %s ... " % set_index
-            traceback.print_exc()
-        print "Created schema for %s in Elasticsearch" % set_index
+            print("Failed to create ES index %s ... " % set_index)
+        print("Created schema for %s in Elasticsearch" % set_index)
 
 
 def loop_index_to_escl(escl, index, docs, doc_type=DOC_TYPE):
@@ -138,10 +137,10 @@ def get_user_location_schema():
     }
     return schema
 
-def generator_docs(docs):
+def generator_docs(docs, index, doc_type):
     for doc in docs:
-        doc['_index'] = TARGET_INDEX
-        doc['_type'] = DOC_TYPE
+        doc['_index'] = index
+        doc['_type'] = doc_type
         yield doc
 
 def main():
